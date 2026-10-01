@@ -21,32 +21,83 @@
 #include <stdlib.h>
 
 #include "barrier.h"
+#include "mysem.h"
 
 /* TODO: the barrier's state. What has to be shared between the threads, and
  *       what does each thread have to remember for itself? */
+typedef struct {
+    pthread_mutex_t     lock;
+    my_sem_t            sem;
+    int                 n;        /* how many threads have to arrive */
+    int                 count;    /* how many have arrived this round */
+    unsigned long       gen;      /* which round this barrier is on   */
+} bar_t;
 
-static void *create(int nthreads)
-{
+//static void *create(int nthreads)
+//{
     /* TODO: allocate it, initialise everything, and return it. Anything a
      *       thread might lock or wait on has to be ready BEFORE the first
      *       thread can reach it. */
-    (void)nthreads;
-    return NULL;
+//    (void)nthreads;
+//    return NULL;
+//}
+static void *create(int nthreads)
+{
+    bar_t *b = malloc(sizeof *b);
+    if (b == NULL) {
+        return NULL;
+    }
+    if (pthread_mutex_init(&b->lock, NULL) != 0 || my_sem_init(&b->sem, 0) != 0) {
+        fprintf(stderr, "barrier init failed\n");
+        free(b);
+        return NULL;
+    }
+    b->n     = nthreads;
+    b->count = 0;
+    b->gen   = 0;
+    return b;
 }
 
-static void wait_(void *p)
-{
+//static void wait_(void *p)
+//{
     /* TODO: the barrier. Write the invariant you are keeping in a comment
      *       above it, in one line, before you write the code -- your report
      *       and your oral both ask you to state it. */
-    (void)p;
+//    (void)p;
+//}
+static void wait_(void *p)
+{
+    bar_t *b = (bar_t *)p;
+
+    pthread_mutex_lock(&b->lock);
+
+    b->count++;
+    if (b->count == b->n) {
+        b->count = 0;                 /* re-arm for the next round */
+        //b->gen++;                     /* this round is over        */
+        for(int i=0;i<b->n;++i){
+            my_sem_post(&b->sem);
+        }
+    }
+    printf("1\n");
+    pthread_mutex_unlock(&b->lock);
+    printf("2\n");
+    my_sem_wait(&b->sem);
+    printf("3\n");
 }
 
-static void destroy(void *p)
-{
+//static void destroy(void *p)
+//{
     /* TODO: release what create() took. Every thread has been joined by the
      *       time this is called. */
-    (void)p;
+//    (void)p;
+//}
+static void destroy(void *p)
+{
+    bar_t *b = (bar_t *)p;
+    pthread_mutex_destroy(&b->lock);
+    my_sem_destroy(&b->sem);
+    free(b);
 }
 
 const bar_ops_t bar_alt = { "alt", create, wait_, destroy };
