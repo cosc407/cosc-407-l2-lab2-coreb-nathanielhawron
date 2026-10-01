@@ -6,24 +6,24 @@
 >
 > Read `src/given.c` and `BRIEF.md`. Run nothing.
 
-Cores:  REPLACE THIS LINE — from PREP.md
-Lab 0 spread:  REPLACE THIS LINE — the percentage, from PREP.md
+Cores:  20 — from PREP.md
+Lab 0 spread:  39.5% — the percentage, from PREP.md
 
 > **P1.** `./bar given` on **one** thread — does it come out right? Yes/no, one
 > sentence why.
 
-REPLACE THIS LINE
+Yes. With one thread, there can't be any contention. Also, b->count++ will go straight to b->n (0 to 1), so it will go straigt to the if statement, signal noone (since no threads are waiting), then exit the wait.
 
 > **P2.** On **8** threads, pick one and commit to it: right answer / wrong
 > answer / it stops. If wrong, roughly how big is `bad`? If it stops, say at
 > which of the two waits in a round.
 
-REPLACE THIS LINE
+It stops. pthread_cond_signal only notifies a single thread that it can wait, while we want to broadcast to all threads. The first two threads to finish will stop at the second wait, the rest will be stuck at the first.
 
 > **P3.** Three runs at 8 threads — **identical** numbers, or different? Think
 > about this one before you write it; it is the most useful line on the page.
 
-REPLACE THIS LINE
+Each run should give the same numbers, since it is running the same operation (as long as the workloads are truly independant in each round).
 
 > **P4.** Seconds, before measuring. Orders of magnitude are what matter. `cpu`
 > is process CPU time over all threads, so `cpu`/`time` is how many cores were
@@ -31,11 +31,11 @@ REPLACE THIS LINE
 
 | | 1 thread: time | 8 threads: time | 8 threads: cpu/time |
 |---|---|---|---|
-| `given` | | | |
-| `fixed` | | | |
-| `alt` | | | |
+| `given` | inf| inf| inf|
+| `fixed` | 10ms| 15ms| 7|
+| `alt` | 10ms| 20ms| 6|
 
 > **P5.** Fastest and slowest at 8 threads? Name anything you expect to get
 > **slower** as threads are added, and anything you expect to stop altogether.
 
-REPLACE THIS LINE
+Fastest will be fixed, slowest given. Alt will slow down as more threads are added, given will take infinite time since it stops. Alt takes slightly longer because it has to do an additional loop to add to post to the semaphore.
